@@ -12,7 +12,7 @@ from us_visa.logger import logging
 from us_visa.utils.main_utils import read_yaml_file, write_yaml_file
 from us_visa.entity.artifact_entity import DataIngestionArtifact, DataValidationArtifact
 from us_visa.entity.config_entity import DataValidationConfig
-from us_visa.components import SCHEMA_FILE_PATH
+from us_visa.constants import SCHEMA_FILE_PATH
 
 
 class DataValidation:
@@ -65,7 +65,7 @@ class DataValidation:
     
     def detect_dataset_drift(self, reference_df: DataFrame, current_df: DataFrame, ) -> bool:
         try:
-            data_drift_profile = Profile(sections=[DataDriftProfileSection])
+            data_drift_profile = Profile(sections=[DataDriftProfileSection()])
             data_drift_profile.calculate(reference_df, current_df)
 
             report = data_drift_profile.json()
@@ -86,8 +86,8 @@ class DataValidation:
         try:
             validation_error_msg = ""
             logging.info("Starting data validation")
-            train_df, test_df = (DataValidation.read_file(file_path = self.data_ingestion_artifact.trained_file_path),
-                                 DataValidation.read_file(file_path = self.data_ingestion_artifact.test_file_path))
+            train_df, test_df = (DataValidation.read_data(file_path = self.data_ingestion_artifact.trained_file_path),
+                                 DataValidation.read_data(file_path = self.data_ingestion_artifact.test_file_path))
             
             status = self.validate_number_of_columns(dataframe=train_df)
             logging.info(f"All required columns present in training dataframe: {status}")
@@ -99,11 +99,11 @@ class DataValidation:
             if not status:
                 validation_error_msg += f"columns are missing in test dataframe."
 
-            status = self.is_column_exist(dataframe=train_df)
+            status = self.is_column_exist(df=train_df)
             if not status:
                 validation_error_msg += f"columns are missing in train dataframe."
 
-            status = self.is_column_exist(dataframe=test_df)
+            status = self.is_column_exist(df=test_df)
             if not status:
                 validation_error_msg += f"columns are missing in test dataframe."
                     
